@@ -351,9 +351,16 @@ if (CXX_GCC OR CXX_CLANG)
         endif()
     elseif(ARCHITECTURE_arm64)
         # See https://gcc.gnu.org/onlinedocs/gcc/AArch64-Options.html
-        set(YUZU_BUILD_PRESET "custom" CACHE STRING "Build preset to use. One of: custom, generic, optimized, armv9, native")
+        set(YUZU_BUILD_PRESET "custom" CACHE STRING "Build preset to use. One of: custom, generic, optimized, armv9, rp-duo, native")
         set(mtune generic)
-        if (${YUZU_BUILD_PRESET} STREQUAL "generic")
+        if (${YUZU_BUILD_PRESET} STREQUAL "rp-duo")
+            # Eden Duo: Retroid Pocket Duo (Dragonwing Q-7790, Cortex-A720 + A520). The ARMv8.2
+            # extensions both core types have, tuned for the A720. Deliberately no SVE/SVE2
+            # (armv9-a would allow them): Qualcomm firmware has shipped with SVE disabled, and an
+            # auto-vectorised SVE instruction would then crash the app with SIGILL.
+            set(march armv8.2-a+lse+rcpc+dotprod+fp16+crypto)
+            set(mtune cortex-a720)
+        elseif (${YUZU_BUILD_PRESET} STREQUAL "generic")
             set(march armv8-a)
         elseif (${YUZU_BUILD_PRESET} STREQUAL "optimized")
             set(march armv8.2-a+lse+rcpc)

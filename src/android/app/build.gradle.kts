@@ -192,6 +192,13 @@ android {
             ndk {
                 abiFilters += listOf("arm64-v8a")
             }
+
+            // Eden Duo: compile for the Retroid Pocket Duo's CPU (see YUZU_BUILD_PRESET rp-duo).
+            externalNativeBuild {
+                cmake {
+                    arguments.add("-DYUZU_BUILD_PRESET=rp-duo")
+                }
+            }
         }
 
         create("genshinSpoof") {
