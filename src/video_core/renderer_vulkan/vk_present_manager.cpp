@@ -136,6 +136,7 @@ PresentManager::PresentManager(const vk::Instance& instance_,
     // async_presentation setting, which the main swapchain still honours.
     , use_present_thread{force_present_thread ||
                          (allow_present_thread && Settings::values.async_presentation.GetValue())}
+    , is_aux_present{force_present_thread}
 {
     SetImageCount();
 
@@ -334,9 +335,19 @@ void PresentManager::WaitPresent() {
 }
 
 void PresentManager::PresentThread(std::stop_token token) {
-    Common::SetCurrentThreadName("VulkanPresent");
-    Common::SetCurrentThreadPriority(Common::ThreadPriority::High);
-    Common::SetCurrentThreadToPerformanceCores();
+    if (is_aux_present) {
+        // Eden Duo: the companion screen changes at <=30 Hz and its present is not on the game's
+        // critical path. Keep it off the performance cores, which on 1+4+3 SoCs such as the
+        // Retroid Pocket Duo's Q-7790 are already shared by four guest cores, the Vulkan worker,
+        // the main present thread, core timing and the VI conductor.
+        Common::SetCurrentThreadName("VulkanPresentAux");
+        Common::SetCurrentThreadPriority(Common::ThreadPriority::Normal);
+        Common::SetCurrentThreadToEfficiencyCores();
+    } else {
+        Common::SetCurrentThreadName("VulkanPresent");
+        Common::SetCurrentThreadPriority(Common::ThreadPriority::High);
+        Common::SetCurrentThreadToPerformanceCores();
+    }
     while (!token.stop_requested()) {
         std::unique_lock lock{queue_mutex};
         // Wait for presentation frames

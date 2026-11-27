@@ -48,6 +48,34 @@ class AuxPresentation(outerContext: Context, display: Display) :
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
         )
         setContentView(host.createView())
+        preferSixtyHertz()
+    }
+
+    /**
+     * Eden Duo: the companion redraws at <=30 Hz, so a 120 Hz second panel (Retroid Pocket Duo,
+     * 1280x960 @ 120 Hz) only burns power and heat that the SoC could spend on the game. Ask for
+     * the panel's ~60 Hz mode at the same resolution when it has one; otherwise leave it alone.
+     */
+    private fun preferSixtyHertz() {
+        val w = window ?: return
+        try {
+            val current = display.mode
+            if (current.refreshRate < 61f) return
+            val sixty = display.supportedModes
+                .filter {
+                    it.physicalWidth == current.physicalWidth &&
+                        it.physicalHeight == current.physicalHeight &&
+                        it.refreshRate in 59f..61f
+                }
+                .minByOrNull { kotlin.math.abs(it.refreshRate - 60f) } ?: return
+            w.attributes = w.attributes.apply { preferredDisplayModeId = sixty.modeId }
+            Log.info(
+                "[AuxPresentation] second screen ${current.refreshRate} Hz -> " +
+                    "${sixty.refreshRate} Hz (mode ${sixty.modeId})"
+            )
+        } catch (e: Exception) {
+            Log.warning("[AuxPresentation] could not change the second screen's mode: ${e.message}")
+        }
     }
 
     override fun onStart() {

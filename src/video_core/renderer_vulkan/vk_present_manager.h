@@ -113,6 +113,9 @@ private:
     bool blit_supported;
     bool storage_supported;
     bool use_present_thread;
+    /// Eden Duo: this manager presents the second (companion) screen. Its present thread then
+    /// runs on the efficiency cores so it does not compete with the guest CPU/GPU threads.
+    bool is_aux_present;
     std::atomic<std::size_t> image_count{};
     std::atomic<std::size_t> swapchain_image_count{};
     std::atomic<VkFormat> swapchain_image_format{};

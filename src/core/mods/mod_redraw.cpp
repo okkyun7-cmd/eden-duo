@@ -1541,6 +1541,9 @@ void ModRuntime::RedrawWorkerMain(std::stop_token stop) {
     Common::SetCurrentThreadName("DSModRedraw");
     if (!keep_normal_priority) {
         Common::SetCurrentThreadPriority(Common::ThreadPriority::Low);
+        // Eden Duo: companion rasterisation is off the game's critical path; run it on the
+        // efficiency cores (no-op where the CPU has no separate efficiency cluster).
+        Common::SetCurrentThreadToEfficiencyCores();
     }
     std::unique_lock lock{redraw_job_mutex};
     while (!stop.stop_requested()) {
