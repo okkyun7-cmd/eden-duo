@@ -25,6 +25,12 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Install host tools (shader compiler)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q glslang-tools
+          glslangValidator --version | head -1
+
       # The ubuntu runner already ships an Android SDK; use its sdkmanager directly.
       - name: Install NDK and CMake (versions from app/build.gradle.kts)
         run: |
@@ -50,7 +56,10 @@ jobs:
         run: |
           export CPM_SOURCE_CACHE="$HOME/.cache/cpm"
           chmod +x gradlew
-          ./gradlew --no-daemon assembleMainlineRelWithDebInfo
+          GRADLE_OPTS="-Dorg.gradle.parallel=false -Dorg.gradle.workers.max=$(nproc)"
+          # Native first: CMake configure generates the SDL Java sources the Kotlin compile needs.
+          ./gradlew --no-daemon $GRADLE_OPTS :app:externalNativeBuildMainlineRelWithDebInfo
+          ./gradlew --no-daemon $GRADLE_OPTS assembleMainlineRelWithDebInfo
 
       - uses: actions/upload-artifact@v4
         with:
