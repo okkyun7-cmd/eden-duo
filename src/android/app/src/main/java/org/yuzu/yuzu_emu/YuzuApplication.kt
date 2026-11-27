@@ -73,6 +73,8 @@ class YuzuApplication : Application() {
         NativeLibrary.logDeviceInfo()
         PowerStateUpdater.start()
         Log.logDeviceInfo()
+        // Eden Duo: one-time defaults for the Retroid Pocket Duo (no-op elsewhere).
+        org.yuzu.yuzu_emu.duo.DuoDeviceProfile.applyOnce(this)
         ControllerNavigationGlobalHook.install(this)
 
         createNotificationChannels()
